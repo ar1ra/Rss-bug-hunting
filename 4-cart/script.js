@@ -24,7 +24,7 @@ function renderProducts() {
     card.innerHTML = `<h3>${p.name}</h3><p>${p.price} ₽</p>`;
     const btn = document.createElement("button");
     btn.textContent = "В корзину";
-    btn.addEventListener("click", addToCart);
+    btn.addEventListener("click", () => addToCart(p.id));
     card.appendChild(btn);
     productsEl.appendChild(card);
   });
@@ -35,18 +35,30 @@ function addToCart(id) {
   if (!product) {
     return;
   }
-  cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
+
+  const itemInCart = cart.find((item) => item.id === product.id);
+  if (itemInCart) {
+    itemInCart.qty++;
+  } else {
+    cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
+  }
   renderCart();
 }
 
 function increaseQty(id) {
   const item = cart.find((i) => i.id === id);
-  item.qty;
+
+  if (!item) return;
+
+  item.qty++;
   renderCart();
 }
 
 function decreaseQty(id) {
   const item = cart.find((i) => i.id === id);
+
+  if (!item || item.qty <= 1) return;
+
   item.qty--;
   renderCart();
 }
@@ -57,22 +69,23 @@ function removeItem(id) {
 }
 
 function applyPromo() {
-  if ((promoInput.value = "SALE10")) {
+  if (promoInput.value.trim() === "SALE10") {
     discount = 0.1;
+    promoInput.value = "";
   }
   renderCart();
 }
 
 function clearCart() {
-  cart.splice(0, 1);
+  cart = [];
   renderCart();
 }
 
 function renderCart() {
   cartItemsEl.innerHTML = "";
-  let total = "";
+  let total = 0;
   cart.forEach((item) => {
-    const lineTotal = item.price;
+    const lineTotal = item.price * item.qty;
     const li = document.createElement("li");
     li.className = "cart-item";
     li.innerHTML = `<span>${item.name}</span>
@@ -90,11 +103,13 @@ function renderCart() {
 
   if (discount) {
     total = total - total * discount;
+    discount = 0;
   }
 
-  badgeEl.textContent = cart.length;
+  badgeEl.textContent = cart.reduce((prev, cur) => prev + cur.qty, 0);
   totalEl.textContent = total;
-  emptyMsg.hidden = true;
+
+  emptyMsg.hidden = cart.length > 0;
 }
 
 promoBtn.addEventListener("click", applyPromo);
